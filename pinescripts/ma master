@@ -1,0 +1,106 @@
+//@version=3
+study("VWAP/MA master", overlay=true)
+showVWAPD = input(true, type=bool, title="Show daily VWAP")
+showVWAPW = input(true, type=bool, title="Show weekly VWAP")
+showVWAPM = input(true, type=bool, title="Show monthly VWAP")
+showVWAPY = input(true, type=bool, title="Show yearly VWAP")
+
+showPrevVWAPD = input(true, type=bool, title="Show previous daily VWAP close")
+showPrevVWAPW = input(true, type=bool, title="Show previous weekly VWAP close")
+showPrevVWAPM = input(true, type=bool, title="Show previous monthly VWAP close")
+showPrevVWAPY = input(true, type=bool, title="Show previous yearly VWAP close")
+
+startd = security(tickerid, 'D', time)
+startw = security(tickerid, 'W', time)
+startm = security(tickerid, 'M', time)
+starty = security(tickerid, '12M', time)
+
+newSessionD = iff(change(startd), 1, 0)
+newSessionW = iff(change(startw), 1, 0)
+newSessionM = iff(change(startm), 1, 0)
+newSessionY = iff(change(starty), 1, 0)
+
+vwapsumD = 0.0
+vwapsumD := iff(newSessionD, hl2*volume, vwapsumD[1]+hl2*volume)
+volumesumD = 0.0
+volumesumD := iff(newSessionD, volume, volumesumD[1]+volume)
+myvwapD = 0.0
+myvwapD := vwapsumD/volumesumD
+
+vwapsumW = 0.0
+vwapsumW := iff(newSessionW, hl2*volume, vwapsumW[1]+hl2*volume)
+volumesumW = 0.0
+volumesumW := iff(newSessionW, volume, volumesumW[1]+volume)
+myvwapW = 0.0
+myvwapW := vwapsumW/volumesumW
+
+vwapsumM = 0.0
+vwapsumM := iff(newSessionM, hl2*volume, vwapsumM[1]+hl2*volume)
+volumesumM = 0.0
+volumesumM := iff(newSessionM, volume, volumesumM[1]+volume)
+myvwapM = 0.0
+myvwapM := vwapsumM/volumesumM
+
+vwapsumY = 0.0
+vwapsumY := iff(newSessionY, hl2*volume, vwapsumY[1]+hl2*volume)
+volumesumY = 0.0
+volumesumY := iff(newSessionY, volume, volumesumY[1]+volume)
+myvwapY = 0.0
+myvwapY := vwapsumY/volumesumY
+
+if (barstate.isrealtime)
+    myvwapD := myvwapD[1]
+    volumesumD := volumesumD[1]
+    myvwapW := myvwapW[1]
+    volumesumW := volumesumW[1]
+    myvwapM := myvwapM[1]
+    volumesumM := volumesumM[1]
+    myvwapY := myvwapY[1]
+    volumesumY := volumesumY[1]   
+
+plot_daily = plot(showVWAPD ? myvwapD : na, title="Daily VWAP", style=cross, color=fuchsia, linewidth=1, transp=20)
+plot_weekly= plot(showVWAPW ? myvwapW : na, title="Weekly VWAP", style=cross, color=aqua, linewidth=2, transp=0)
+plot_monthly = plot(showVWAPM ? myvwapM : na, title="Monthly VWAP", style=circles, color=white, linewidth=2, transp=0)
+plot_yearly = plot(showVWAPY ? myvwapY : na, title="Yearly VWAP", style=circles, color=yellow, linewidth=2, transp=0)
+
+prevwapD = 0.0
+prevwapD := iff(newSessionD, myvwapD[1], prevwapD[1])
+plot(showPrevVWAPD ? prevwapD : na, title="Prev Daily VWAP", style=circles, color=close > prevwapD ? green : red, linewidth=1, transp=20)
+
+prevwapW = 0.0
+prevwapW := iff(newSessionW, myvwapW[1], prevwapW[1])
+plot(showPrevVWAPW ? prevwapW : na, title="Prev Weekly VWAP", style=cross, color=close > prevwapW ? green : red, linewidth=2, transp=0)
+
+prevwapM = 0.0
+prevwapM := iff(newSessionM, myvwapM[1], prevwapM[1])
+plot(showPrevVWAPM ? prevwapM : na, title="Prev Monthly VWAP", style=circles, color=close > prevwapM ? green : red, linewidth=2, transp=0)
+
+prevwapY = 0.0
+prevwapY := iff(newSessionY, myvwapY[1], prevwapY[1])
+plot(showPrevVWAPY ? prevwapY : na, title="Prev Yearly VWAP", color=close > prevwapY ? green : red, linewidth=3, transp=0)
+    
+ema20 = sma(close[1], 20)
+sma50 = sma(close[1], 50)
+sma100 = sma(close[1], 100)
+sma200 = sma(close[1], 200)
+output20 = security(tickerid, 'D', ema20, lookahead=barmerge.lookahead_on)
+output50 = security(tickerid, 'D', sma50,  lookahead=barmerge.lookahead_on)
+output100 = security(tickerid, 'D', sma100,  lookahead=barmerge.lookahead_on)
+output200 = security(tickerid, 'D', sma200,  lookahead=barmerge.lookahead_on)
+ema20Pre = sma(close, 20)
+sma50Pre = sma(close, 50)
+sma100Pre = sma(close, 100)
+sma200Pre = sma(close, 200)
+output20Pre = security(tickerid, 'D', ema20Pre, lookahead=barmerge.lookahead_on)
+output50Pre = security(tickerid, 'D', sma50Pre,  lookahead=barmerge.lookahead_on)
+output100Pre = security(tickerid, 'D', sma100Pre,  lookahead=barmerge.lookahead_on)
+output200Pre = security(tickerid, 'D', sma200Pre,  lookahead=barmerge.lookahead_on)
+
+preMarket = false
+if (hour < 9 or (hour == 9 and minute <= 29))
+    preMarket := true
+
+plot(preMarket ? output200Pre: output200, title= '200 SMA', color=red, linewidth=2, transp=0)
+plot(preMarket ? output100Pre: output100, title= '100 SMA', color=orange, linewidth=2, transp=0)
+plot(preMarket ? output50Pre: output50, title= '50 SMA', color=yellow, linewidth=2)
+plot(preMarket ? output20Pre: output20, title= '20 EMA', color=silver, linewidth=2)
