@@ -1,0 +1,7 @@
+    # for date in subfolders:
+        # data_folder = Path("extracted/"+date+".csv")
+        # file_to_open = data_folder / ("trade_"+date+".csv")
+        # df = pandas.read_csv(file_to_open)
+        # df = df[df.symbol == 'XBTUSD']
+        # df.to_csv (r'C:/Users/timde/OneDrive/Desktop/algo/BeatTheSystem/XBTdata/' + date + 'XBT.csv', index = None, header=True)
+        # print(date)
