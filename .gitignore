@@ -1,2 +1,5 @@
 env/
 .vscode/
+XBTdata/
+minuteBarData/
+postProcessingData/
