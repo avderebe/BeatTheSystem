@@ -9,7 +9,7 @@ from pathlib import Path
 def Main():
     #data1m = dataPull.bitmexBarExtractor('XBTUSD')
 
-    subfolders = [ f.name for f in os.scandir(r'C:/Users/timde/OneDrive/Desktop/algo/BeatTheSystem/XBTdata/') if f.is_file() ]
+    subfolders = [ f.name for f in os.scandir(r'./XBTdata/') if f.is_file() ]
     subfolders = ([s.replace('XBT.csv', '') for s in subfolders]) 
 
     for d in pandas.date_range('20141122','20200505'):
