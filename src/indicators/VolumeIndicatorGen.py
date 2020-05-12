@@ -27,9 +27,9 @@ class VolumeIndicatorGen(IndicatorGenBase):
     def GetIndicatorValues(self):
         name = ""
         if self.Type == VolumeType.Buy:
-            name = "bvol"
+            name = "vbuy"
         elif self.Type == VolumeType.Sell:
-            name = "svol"
+            name = "vsell"
         elif self.Type == VolumeType.All:
-            name = "vol"
+            name = "vtotal"
         return {name : self.volume}
