@@ -5,15 +5,15 @@ import math
 
 
 class BarChartIndicatorGen(IndicatorGenBase):
-    def __init__(self, timePeriodMinutes):
+    def __init__(self, timePeriod):
         #initialize the super class (This is the class that gives the basic structure of the indicator generator)
-        super().__init__(timePeriodMinutes)
+        super().__init__(timePeriod)
         self.open = None
         self.close = None
         self.low = None
         self.high = None
 
-    def StartNewTimePeriod(self, time):
+    def StartNewTimePeriod(self):
         #sets everything to values from last bar chart
         self.open = self.close
         self.low = self.close

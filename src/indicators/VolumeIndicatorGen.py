@@ -8,12 +8,12 @@ class VolumeType(Enum):
 
 
 class VolumeIndicatorGen(IndicatorGenBase):
-    def __init__(self, timePeriodMinutes, volumeType):
-        super().__init__(timePeriodMinutes)
+    def __init__(self, timePeriod, volumeType):
+        super().__init__(timePeriod)
         self.Type = volumeType
         self.volume = 0
 
-    def StartNewTimePeriod(self, time):
+    def StartNewTimePeriod(self):
         self.volume = 0
 
     def ProcessTransation(self, time, amount, price):

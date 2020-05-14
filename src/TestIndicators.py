@@ -1,17 +1,19 @@
 from indicators.VolumeIndicatorGen import VolumeType,VolumeIndicatorGen
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VWAPIndicatorGen import VWapIndicatorGen
+from datetime import timedelta
 
 def TestIndicators():
+    indicatorTimeSpan = timedelta(minutes=5)
     indicators = []
-    indicators.append(BarChartIndicatorGen(5))
-    indicators.append(VolumeIndicatorGen(5, VolumeType.Buy))
-    indicators.append(VolumeIndicatorGen(5, VolumeType.Sell))
-    indicators.append(VolumeIndicatorGen(5, VolumeType.All))
-    indicators.append(VWapIndicatorGen(5))
+    indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
+    indicators.append(VWapIndicatorGen(indicatorTimeSpan))
+    indicators.append(VWapIndicatorGen(indicatorTimeSpan*3))
 
     for indicator in indicators:
-        indicator.StartNewTimePeriod()
         indicator.ProcessTransation(0, 1, 10)
         indicator.ProcessTransation(0, 2, 20)
         indicator.ProcessTransation(0, -1, 5)
@@ -19,8 +21,8 @@ def TestIndicators():
         indicator.ProcessTransation(0, 4, 15)
 
         print(indicator.GetIndicatorValues())
+        indicator.AdvanceTime(indicatorTimeSpan)
 
-        indicator.StartNewTimePeriod()
         indicator.ProcessTransation(0, -2, 55)
         indicator.ProcessTransation(0, -1, 35)
         indicator.ProcessTransation(0, 3, 45)
@@ -28,8 +30,8 @@ def TestIndicators():
         indicator.ProcessTransation(0, 5, 25)
 
         print(indicator.GetIndicatorValues())
-        
-        indicator.StartNewTimePeriod()
+        indicator.AdvanceTime(indicatorTimeSpan)
+
         indicator.ProcessTransation(0, 1, 35)
         indicator.ProcessTransation(0, 2, 75)
         indicator.ProcessTransation(0, 3, 65)
@@ -37,6 +39,7 @@ def TestIndicators():
         indicator.ProcessTransation(0, 5, 70)
 
         print(indicator.GetIndicatorValues())
+        indicator.AdvanceTime(indicatorTimeSpan)
 
 
 if __name__ == "__main__":

@@ -9,12 +9,13 @@ from indicators.VWAPIndicatorGen import *
 from datetime import datetime, timedelta
 
 
-indicatorTimeSpan = 5 #minutes
+indicatorTimeSpan = timedelta(minutes=5) #minutes
 
 #list of indicators that we will use to generate the data
+
 indicators = []
 indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
-indicators.append(VWapIndicatorGen(indicatorTimeSpan))
+indicators.append(VWapIndicatorGen(timedelta(days=1))) #1day vwap
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
@@ -24,42 +25,51 @@ indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
 
 data = {}
 
-os.chdir("postProcessingData")
-all_filenames = [i for i in glob.glob('*.csv')]
-xbtData = pandas.concat([pandas.read_csv(f) for f in all_filenames], ignore_index=True)
 
 
-#set up state with first transaction
-curTime = datetime.strptime(xbtData.loc[xbtData.index[0], 'timestamp'][:-3], "%Y-%m-%dD%H:%M:%S.%f")
-curTime = curTime - timedelta(minutes=curTime.minute % indicatorTimeSpan, seconds = curTime.second, microseconds=curTime.microsecond)
-for indicator in indicators:
-    indicator.StartNewTimePeriod(time = curTime)
+curTime = None
+
 
 i = 0
+all_filenames = [a for a in glob.glob('.\\postProcessingData\\*.csv')]
+for f in all_filenames:
 
-for idx, row in xbtData.iterrows():
 
-    #parse out dateTime
-    dt = datetime.strptime(row['timestamp'][:-3], "%Y-%m-%dD%H:%M:%S.%f")
+    xbtData = pandas.read_csv(f)
 
-    #This is to start/end a time period if enough time has passed
-    #Advances times periods until the transaction falls within it
-    while ((dt - curTime).seconds / 60 >= indicatorTimeSpan):
-        newRow = {'timestamp' : curTime.strftime("%Y-%m-%dD%H:%M:%S")}
+    if curTime == None:
+        #set up state with first transaction
+        curTime = datetime.strptime(xbtData.loc[xbtData.index[0], 'timestamp'][:-3], "%Y-%m-%dD%H:%M:%S.%f")
+
+        #need to round to nearest 5 min/10min/hr maybe?
+        #doesn't round properly yet
+        curTime = curTime - timedelta(minutes=curTime.minute % round(indicatorTimeSpan.seconds / 60), seconds = curTime.second, microseconds=curTime.microsecond)
+
+    for idx, row in xbtData.iterrows():
+
+        #parse out dateTime
+        dt = datetime.strptime(row['timestamp'][:-3], "%Y-%m-%dD%H:%M:%S.%f")
+
+        #This is to start/end a time period if enough time has passed
+        #Advances times periods until the transaction falls within it
+        while ((dt - curTime) >= indicatorTimeSpan):
+            newRow = {'timestamp' : curTime.strftime("%Y-%m-%dD%H:%M:%S")}
+            for indicator in indicators:
+                #copy indicator vals from obj to the new row
+                ####### MULTIPLE INDICATORS OF SAME TIME WILL OVERWRITE EACHOTHER
+                ####### MUST BE FIXED
+                newRow.update(indicator.GetIndicatorValues())
+                indicator.AdvanceTime(indicatorTimeSpan)
+            print(newRow)
+            data[i] = newRow
+
+            #advance to next time period
+            curTime = curTime + indicatorTimeSpan
+
+        #negative amount means sell volume
+        #positive amount means buy volume
+        amount = row['size'] * (1 if row['side'] == 'Buy' else -1)
+        price = row['price']
+        time = dt
         for indicator in indicators:
-            #copy indicator vals from obj to the new row
-            newRow.update(indicator.GetIndicatorValues())
-            indicator.StartNewTimePeriod(dt)
-        print(newRow)
-        data[i] = newRow
-
-        #advance to next time period
-        curTime = curTime + timedelta(minutes = indicatorTimeSpan)
-
-    #negative amount means sell volume
-    #positive amount means buy volume
-    amount = row['size'] * (1 if row['side'] == 'Buy' else -1)
-    price = row['price']
-    time = dt
-    for indicator in indicators:
-        indicator.ProcessTransation(time, amount, price)
+            indicator.ProcessTransation(time, amount, price)
