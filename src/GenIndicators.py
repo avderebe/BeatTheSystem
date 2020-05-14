@@ -1,5 +1,7 @@
 import pandas
 import numpy
+import glob
+import os
 
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VolumeIndicatorGen import *
@@ -7,7 +9,7 @@ from indicators.VWAPIndicatorGen import *
 from datetime import datetime, timedelta
 
 
-indicatorTimeSpan = 1 #minutes
+indicatorTimeSpan = 5 #minutes
 
 #list of indicators that we will use to generate the data
 indicators = []
@@ -22,13 +24,16 @@ indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
 
 data = {}
 
-xbtData = pandas.read_csv(".\postProcessingData\XBT20170101.csv")
+os.chdir("postProcessingData")
+all_filenames = [i for i in glob.glob('*.csv')]
+xbtData = pandas.concat([pandas.read_csv(f) for f in all_filenames], ignore_index=True)
+
 
 #set up state with first transaction
 curTime = datetime.strptime(xbtData.loc[xbtData.index[0], 'timestamp'][:-3], "%Y-%m-%dD%H:%M:%S.%f")
 curTime = curTime - timedelta(minutes=curTime.minute % indicatorTimeSpan, seconds = curTime.second, microseconds=curTime.microsecond)
 for indicator in indicators:
-    indicator.StartNewTimePeriod()
+    indicator.StartNewTimePeriod(time = curTime)
 
 i = 0
 
@@ -44,7 +49,7 @@ for idx, row in xbtData.iterrows():
         for indicator in indicators:
             #copy indicator vals from obj to the new row
             newRow.update(indicator.GetIndicatorValues())
-            indicator.StartNewTimePeriod()
+            indicator.StartNewTimePeriod(dt)
         print(newRow)
         data[i] = newRow
 

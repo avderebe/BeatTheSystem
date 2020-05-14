@@ -13,7 +13,7 @@ class BarChartIndicatorGen(IndicatorGenBase):
         self.low = None
         self.high = None
 
-    def StartNewTimePeriod(self):
+    def StartNewTimePeriod(self, time):
         #sets everything to values from last bar chart
         self.open = self.close
         self.low = self.close

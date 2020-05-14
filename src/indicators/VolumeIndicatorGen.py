@@ -13,7 +13,7 @@ class VolumeIndicatorGen(IndicatorGenBase):
         self.Type = volumeType
         self.volume = 0
 
-    def StartNewTimePeriod(self):
+    def StartNewTimePeriod(self, time):
         self.volume = 0
 
     def ProcessTransation(self, time, amount, price):
