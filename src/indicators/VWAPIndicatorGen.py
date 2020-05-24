@@ -8,7 +8,7 @@ class VWapIndicatorGen(IndicatorGenBase):
         self.volume = 0
 
     def StartNewTimePeriod(self):
-        self.volume = 0
+            self.volume = 0
 
     def ProcessTransation(self, time, amount, price):
         self.average = ((self.average * self.volume) + (price * abs(amount))) / (self.volume + abs(amount))
