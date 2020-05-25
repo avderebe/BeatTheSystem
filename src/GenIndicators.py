@@ -19,7 +19,8 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
     i = 0
     filesDone = 0
 
-    os.remove(outputPath)
+    if os.path.exists(outputPath):
+        os.remove(outputPath)
 
     all_filenames = [a for a in glob.glob('.\\postProcessingData\\*.csv')]
     for f in all_filenames:
