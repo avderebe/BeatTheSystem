@@ -10,6 +10,7 @@ from indicators.VolumeIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
 from datetime import datetime, timedelta
 
+l3 = None
 
 indicatorTimeSpan = timedelta(minutes=5) #minutes
 
@@ -17,7 +18,7 @@ indicatorTimeSpan = timedelta(minutes=5) #minutes
 
 indicators = []
 indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
-indicators.append(VWapIndicatorGen(timedelta(days=7))) #1day vwap
+indicators.append(VWapIndicatorGen(timedelta(days=7)))
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
 indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
@@ -70,6 +71,8 @@ for f in all_filenames:
             trendChanges = pandas.Series(df.loc['trend', : ].diff())
             trends_filtered = trendChanges[trendChanges!=0]
 
+            print(l3)
+
             annotations = []
             moves = []
             totalProfit = 0
@@ -92,11 +95,10 @@ for f in all_filenames:
                         totalProfit += (df.loc['close', index]-moves[-1][1])/moves[-1][1]
                     moves.append([df.loc['timestamp', index], df.loc['close', index], 0, totalProfit])
 
-            if i == 20 or i == 150 or i==300 or i==600 or i>1000: 
+            if i > 600: 
                 movesArray = numpy.array(moves)
                 print(moves)
                 print(movesArray)
-                print(movesArray[:,0])
                 fig = make_subplots(rows=2, cols=1, row_heights=[0.8,0.2])
 
                 fig.add_trace(go.Candlestick(
@@ -125,6 +127,9 @@ for f in all_filenames:
                     yaxis_title='AAPL Stock',
                     xaxis=go.layout.XAxis(rangeslider=dict (visible = False)),
                     annotations = annotations))
+                fig.add_trace(go.Scatter(
+                    x=pandas.to_datetime(df.loc['timestamp', : ], format="%Y-%m-%dD%H:%M:%S"),
+                    y=df.loc['vwap', : ], line=dict(color='rgb(0,0,0)', width=2)))
                 fig.update_yaxes(title_text="Percent profit", showgrid=False, row=2, col=1)
                 fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[0, -1], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=2, col=1)
                 fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[0, -1], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=1, col=1)
