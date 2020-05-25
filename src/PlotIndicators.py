@@ -2,6 +2,20 @@ from GenIndicators import *
 from datetime import datetime, timedelta
 from indicators.BarChartIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def GenerateAndPlot():
+    filepath = ".\\minuteBarData\\test.csv"
+
+    indicatorTimeSpan = timedelta(minutes=5)
+
+    indicators = []
+    indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
+    indicators.append(VWapIndicatorGen(indicatorTimeSpan))
+
+    GenerateIndicators(1, indicators, indicatorTimeSpan, filepath, True)
+
     df = pandas.read_csv(filepath)
 
     #trendChanges = pandas.Series(df.loc['trend', : ].diff())
