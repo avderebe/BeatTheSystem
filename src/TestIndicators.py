@@ -1,6 +1,7 @@
 from indicators.VolumeIndicatorGen import VolumeType,VolumeIndicatorGen
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VWAPIndicatorGen import VWapIndicatorGen
+from indicators.MarketStructureIndicatorGen import MarketStructureIndicatorGen
 from datetime import timedelta
 
 def TestIndicators():
@@ -12,6 +13,7 @@ def TestIndicators():
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
     indicators.append(VWapIndicatorGen(indicatorTimeSpan))
     indicators.append(VWapIndicatorGen(indicatorTimeSpan*3))
+    indicators.append(MarketStructureIndicatorGen(indicatorTimeSpan))
 
     for indicator in indicators:
         indicator.ProcessTransation(0, 1, 10)
