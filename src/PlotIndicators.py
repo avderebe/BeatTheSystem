@@ -2,6 +2,7 @@ from GenIndicators import *
 from datetime import datetime, timedelta
 from indicators.BarChartIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
+from indicators.VolumeIndicatorGen import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -13,6 +14,8 @@ def GenerateAndPlot():
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
     indicators.append(VWapIndicatorGen(indicatorTimeSpan))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
 
     GenerateIndicators(1, indicators, indicatorTimeSpan, filepath, True)
 
@@ -75,11 +78,24 @@ def GenerateAndPlot():
     fig.update_layout(dict(
         title='The Great Recession',
         yaxis_title='AAPL Stock',
+        barmode='relative',
         xaxis=go.layout.XAxis(rangeslider=dict (visible = False))))
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=df['vwap'], line=dict(color='rgb(0,0,0)', width=2)))
     fig.update_yaxes(title_text="Percent profit", showgrid=False, row=2, col=1)
+    fig.add_trace(go.Bar(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['vbuy'],
+        marker=dict(color='rgb(0,200,0)')),
+        row=2, col=1) 
+    fig.add_trace(go.Bar(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['vsell']*-1,
+        marker=dict(color='rgb(200,0,0)')),
+        row=2, col=1) 
+
+    fig.update_yaxes(title_text="Volume", showgrid=False, row=2, col=1)
     fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=2, col=1)
     fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=1, col=1)
 
