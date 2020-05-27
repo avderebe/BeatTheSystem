@@ -8,9 +8,6 @@ from indicators.VolumeIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
 from datetime import datetime, timedelta
 
-
-
-
 def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbose = False):
     #funky stuff for past data manipulation
     #Numpy Arrays and DataFrames are slow to append to, so use dict first
@@ -36,6 +33,7 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
             #need to round to nearest 5 min/10min/hr maybe?
             #doesn't round properly yet
             curTime = curTime - timedelta(minutes=curTime.minute % round(indicatorTimeSpan.seconds / 60), seconds = curTime.second, microseconds=curTime.microsecond)
+            # curTime = curTime - timedelta(minutes=curTime.minute, seconds = curTime.second, microseconds=curTime.microsecond)
 
         for idx, row in xbtData.iterrows():
 
