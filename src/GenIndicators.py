@@ -12,6 +12,13 @@ from datetime import datetime, timedelta
 
 
 def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbose = False):
+
+    if indicatorTimeSpan.microseconds != 0:
+        raise Exception("Microseconds cannot be 0")
+
+    if indicatorTimeSpan.days != 0 and indicatorTimeSpan.seconds != 0:
+        raise Exception("time span must be either full days or fractions of a day")
+
     #funky stuff for past data manipulation
     #Numpy Arrays and DataFrames are slow to append to, so use dict first
     data = []
@@ -35,7 +42,12 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
             #need to round to nearest 5 min/10min/hr maybe?
             #doesn't round properly yet
-            curTime = curTime - timedelta(minutes=curTime.minute % round(indicatorTimeSpan.seconds / 60), seconds = curTime.second, microseconds=curTime.microsecond)
+            if indicatorTimeSpan.days != 0:
+                curTime = curTime.replace(hour=0,minute=0,second=0,microsecond=0)
+            else:
+                seconds = curTime.hour * 60 * 60 + curTime.minute * 60 + curTime.second
+                curTime = curTime - timedelta(seconds = seconds % indicatorTimeSpan.seconds,microseconds=curTime.microsecond)
+            
 
         for idx, row in xbtData.iterrows():
 
@@ -87,7 +99,7 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
 
 if __name__ == "__main__":
-    indicatorTimeSpan = timedelta(minutes=5) #minutes
+    indicatorTimeSpan = timedelta(hours = 2, minutes = 30) #minutes
 
     #list of indicators that we will use to generate the data
 
