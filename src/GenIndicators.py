@@ -6,6 +6,7 @@ import os
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VolumeIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
+from indicators.SlidingVWAPIndicatorGen import SlidingVWAPIndicatorGen
 from datetime import datetime, timedelta
 
 
@@ -99,7 +100,7 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
 
 if __name__ == "__main__":
-    indicatorTimeSpan = timedelta(hours = 2, minutes = 30) #minutes
+    indicatorTimeSpan = timedelta(hours = 2) #minutes
 
     #list of indicators that we will use to generate the data
 
@@ -109,5 +110,6 @@ if __name__ == "__main__":
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
+    indicators.append(SlidingVWAPIndicatorGen(timedelta(days=1)))
 
     GenerateIndicators(5, indicators, indicatorTimeSpan, ".\\minuteBarData\\newData.csv", True)
