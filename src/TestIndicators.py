@@ -12,6 +12,7 @@ def TestIndicators():
     indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan))
     indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 2))
     indicators.append(SMAIndicatorGen(indicatorTimeSpan))
+    indicators.append(SMAIndicatorGen(indicatorTimeSpan*2))
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
