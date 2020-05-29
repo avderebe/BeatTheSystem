@@ -3,21 +3,23 @@ from datetime import datetime, timedelta
 from indicators.BarChartIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
 from indicators.VolumeIndicatorGen import *
+from indicators.SlidingVWAPIndicatorGen import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 def GenerateAndPlot():
     filepath = ".\\minuteBarData\\test.csv"
 
-    indicatorTimeSpan = timedelta(minutes=5)
+    indicatorTimeSpan = timedelta(days=1)
 
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
-    indicators.append(VWapIndicatorGen(indicatorTimeSpan))
+    indicators.append(VWapIndicatorGen(indicatorTimeSpan* 7))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
+    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 7))
 
-    GenerateIndicators(1, indicators, indicatorTimeSpan, filepath, True)
+    GenerateIndicators(365, indicators, indicatorTimeSpan, filepath, True)
 
     df = pandas.read_csv(filepath)
 
@@ -82,7 +84,10 @@ def GenerateAndPlot():
         xaxis=go.layout.XAxis(rangeslider=dict (visible = False))))
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['vwap'], line=dict(color='rgb(0,0,0)', width=2)))
+        y=df['7dayVWAP'], line=dict(color='rgb(256,0,0)', width=2)))
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['7daySVWAP'], line=dict(color='rgb(0,0,256)', width=2)))
     fig.update_yaxes(title_text="Percent profit", showgrid=False, row=2, col=1)
     fig.add_trace(go.Bar(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),

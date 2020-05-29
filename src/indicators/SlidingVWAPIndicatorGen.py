@@ -1,5 +1,6 @@
 from .SlidingWindowIndicatorBase import *
 from datetime import timedelta
+from decimal import Decimal
 
 class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
     def __init__(self, timePeriod):
@@ -13,7 +14,7 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
         minutes = round(self.timePeriod.seconds / 60)
-        self.indicator = str(days) + "daySVWAP" if days != 0 else str(hrs) + "hrSVWAP" if hrs >= 1 else str(minutes) + "minSVWAP"
+        self.indicator = str(days) + "daySVWAP" if days != 0 else str(Decimal(hrs).normalize()) + "hrSVWAP" if hrs >= 1 else str(Decimal(minutes).normalize()) + "minSVWAP"
 
 
     def CreateEntry(self):

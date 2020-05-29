@@ -1,5 +1,6 @@
 from .IndicatorGenBase import IndicatorGenBase
 from datetime import *
+from decimal import Decimal
 
 class VWapIndicatorGen(IndicatorGenBase):
     def __init__(self, timePeriod):
@@ -10,7 +11,7 @@ class VWapIndicatorGen(IndicatorGenBase):
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
         minutes = round(self.timePeriod.seconds / 60)
-        self.indicator = str(days) + "dayVWAP" if days != 0 else str(hrs) + "hrVWAP" if hrs >= 1 else str(minutes) + "minVWAP"
+        self.indicator = str(days) + "dayVWAP" if days != 0 else str(Decimal(hrs).normalize()) + "hrVWAP" if hrs >= 1 else str(Decimal(minutes).normalize()) + "minVWAP"
 
     def StartNewTimePeriod(self):
             self.volume = 0

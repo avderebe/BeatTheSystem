@@ -62,7 +62,7 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
                 for indicator in indicators:
                     #copy indicator vals from obj to the new row
                     ####### MULTIPLE INDICATORS OF SAME TIME WILL OVERWRITE EACHOTHER
-                    ####### MUST BE FIXED
+                    ####### FIXED BY ADDING TIME PERIOD TO INDICATOR NAME
                     newRow.update(indicator.GetIndicatorValues())
                     indicator.AdvanceTime(indicatorTimeSpan)
                 data.append(newRow)
@@ -81,13 +81,10 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
         convData = pandas.DataFrame(data)
 
-        header = True
-        if os.path.exists(outputPath):
-            header = False
-        convData.to_csv(outputPath, mode="a", index=False, header=header)
-        
-        data.clear()
-        del xbtData
+        if convData.size != 0:
+            convData.to_csv(outputPath, mode="a", index=False, header=True if not os.path.exists(outputPath) else False)
+            data.clear()
+            del xbtData
 
         after = datetime.now()
 
@@ -97,6 +94,14 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
         filesDone = filesDone + 1
         if filesDone >= nFiles:
             break
+
+        
+    #after files are done, there's still one unclosed time period. Add that too
+
+    newRow = {'timestamp' : curTime.strftime("%Y-%m-%dD%H:%M:%S")}
+    for indicator in indicators:
+        newRow.update(indicator.GetIndicatorValues())
+    pandas.DataFrame([newRow]).to_csv(outputPath, mode="a", index=False, header=True if not os.path.exists(outputPath) else False)
 
 
 if __name__ == "__main__":

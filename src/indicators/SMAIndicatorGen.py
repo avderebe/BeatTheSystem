@@ -1,5 +1,6 @@
 from .SlidingWindowIndicatorBase import *
 from datetime import timedelta
+from decimal import Decimal
 
 class SMAIndicatorGen(SlidingWindowIndicatorBase):
     def __init__(self, timePeriod):
@@ -12,7 +13,7 @@ class SMAIndicatorGen(SlidingWindowIndicatorBase):
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
         minutes = round(self.timePeriod.seconds / 60)
-        self.indicator = str(days) + "daySMA" if days != 0 else str(hrs) + "hrSMA" if hrs >= 1 else str(minutes) + "minSMA"
+        self.indicator = str(days) + "daySMA" if days != 0 else str(Decimal(hrs).normalize()) + "hrSMA" if hrs >= 1 else str(Decimal(minutes).normalize()) + "minSMA"
 
 
     def CreateEntry(self):
