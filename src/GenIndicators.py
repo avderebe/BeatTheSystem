@@ -6,9 +6,20 @@ import os
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VolumeIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
+
 from datetime import datetime, timedelta
 
+
+
+
 def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbose = False):
+
+    if indicatorTimeSpan.microseconds != 0:
+        raise Exception("Microseconds cannot be 0")
+
+    if indicatorTimeSpan.days != 0 and indicatorTimeSpan.seconds != 0:
+        raise Exception("time span must be either full days or fractions of a day")
+
     #funky stuff for past data manipulation
     #Numpy Arrays and DataFrames are slow to append to, so use dict first
     data = []
@@ -32,8 +43,12 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
             #need to round to nearest 5 min/10min/hr maybe?
             #doesn't round properly yet
-            curTime = curTime - timedelta(minutes=curTime.minute % round(indicatorTimeSpan.seconds / 60), seconds = curTime.second, microseconds=curTime.microsecond)
-            # curTime = curTime - timedelta(minutes=curTime.minute, seconds = curTime.second, microseconds=curTime.microsecond)
+            if indicatorTimeSpan.days != 0:
+                curTime = curTime.replace(hour=0,minute=0,second=0,microsecond=0)
+            else:
+                seconds = curTime.hour * 60 * 60 + curTime.minute * 60 + curTime.second
+                curTime = curTime - timedelta(seconds = seconds % indicatorTimeSpan.seconds,microseconds=curTime.microsecond)
+            
 
         for idx, row in xbtData.iterrows():
 
@@ -47,7 +62,7 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
                 for indicator in indicators:
                     #copy indicator vals from obj to the new row
                     ####### MULTIPLE INDICATORS OF SAME TIME WILL OVERWRITE EACHOTHER
-                    ####### MUST BE FIXED
+                    ####### FIXED BY ADDING TIME PERIOD TO INDICATOR NAME
                     newRow.update(indicator.GetIndicatorValues())
                     indicator.AdvanceTime(indicatorTimeSpan)
                 data.append(newRow)
@@ -66,13 +81,10 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
 
         convData = pandas.DataFrame(data)
 
-        header = True
-        if os.path.exists(outputPath):
-            header = False
-        convData.to_csv(outputPath, mode="a", index=False, header=header)
-        
-        data.clear()
-        del xbtData
+        if convData.size != 0:
+            convData.to_csv(outputPath, mode="a", index=False, header=True if not os.path.exists(outputPath) else False)
+            data.clear()
+            del xbtData
 
         after = datetime.now()
 
@@ -83,17 +95,26 @@ def GenerateIndicators(nFiles, indicators, indicatorTimeSpan, outputPath, verbos
         if filesDone >= nFiles:
             break
 
+        
+    #after files are done, there's still one unclosed time period. Add that too
+
+    newRow = {'timestamp' : curTime.strftime("%Y-%m-%dD%H:%M:%S")}
+    for indicator in indicators:
+        newRow.update(indicator.GetIndicatorValues())
+    pandas.DataFrame([newRow]).to_csv(outputPath, mode="a", index=False, header=True if not os.path.exists(outputPath) else False)
+
 
 if __name__ == "__main__":
-    indicatorTimeSpan = timedelta(minutes=5) #minutes
+    indicatorTimeSpan = timedelta(hours = 2) #minutes
 
     #list of indicators that we will use to generate the data
 
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
-    indicators.append(VWapIndicatorGen(timedelta(days=1))) #1day vwap
-    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
-    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
-    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
+    # indicators.append(VWapIndicatorGen(timedelta(days=1))) #1day vwap
+    # indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
+    # indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
+    # indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
+    # indicators.append(SlidingVWAPIndicatorGen(timedelta(days=1)))
 
     GenerateIndicators(5, indicators, indicatorTimeSpan, ".\\minuteBarData\\newData.csv", True)

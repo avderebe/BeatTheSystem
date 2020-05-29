@@ -9,9 +9,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 def GenerateAndPlot():
-    filepath = ".\\minuteBarData\\test2.csv"
+    filepath = ".\\minuteBarData\\test1237.csv"
 
-    indicatorTimeSpan = timedelta(minutes=720)
+    indicatorTimeSpan = timedelta(days=1)
 
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
@@ -20,7 +20,7 @@ def GenerateAndPlot():
     # indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
     indicators.append(MarketStructureIndicatorGen(indicatorTimeSpan))
 
-    GenerateIndicators(180, indicators, indicatorTimeSpan, filepath, True)
+    GenerateIndicators(1237, indicators, indicatorTimeSpan, filepath, True)
 
     df = pandas.read_csv(filepath)
     print(df.columns)
@@ -125,12 +125,11 @@ def GenerateAndPlot():
         fig.add_trace(go.Scatter(
             x=pandas.to_datetime(movesArray[:,0], format="%Y-%m-%dD%H:%M:%S"),
             y=movesArray[:,4], line=dict(color='rgb(100,100,100)', width=2)), row=2, col=1)
-
         fig.update_yaxes(title_text="Percent profit", showgrid=False, row=2, col=1)
-
+    
     fig.show()
+    fig.write_html("7D1.html")
     print("num moves:", len(movesArray))
     print("fees paid:", len(movesArray)*.0075)
-    crash
 if __name__ == "__main__":
     GenerateAndPlot()

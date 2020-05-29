@@ -1,0 +1,22 @@
+//@version=3
+study("VWAP", overlay=true)
+
+// There are five steps in calculating VWAP:
+//
+// 1. Calculate the Typical Price for the period. [(High + Low + Close)/3)]
+// 2. Multiply the Typical Price by the period Volume (Typical Price x Volume)
+// 3. Create a Cumulative Total of Typical Price. Cumulative(Typical Price x Volume)
+// 4. Create a Cumulative Total of Volume. Cumulative(Volume)
+// 5. Divide the Cumulative Totals. 
+//
+// VWAP = Cumulative(Typical Price x Volume) / Cumulative(Volume)
+
+cumulativePeriod = input(14, "Period")
+
+typicalPrice = (high + low + close) / 3
+typicalPriceVolume = typicalPrice * volume
+cumulativeTypicalPriceVolume = sum(typicalPriceVolume, cumulativePeriod)
+cumulativeVolume = sum(volume, cumulativePeriod)
+vwapValue = cumulativeTypicalPriceVolume / cumulativeVolume
+
+plot(vwapValue)
