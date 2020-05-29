@@ -1,14 +1,19 @@
 //@version=3
 study("VWAP/MA master", overlay=true)
+bandTransp = input(70, title="Band transparancy")
+showVWAPP = input(true, type=bool, title="Show period VWAP")
 showVWAPD = input(true, type=bool, title="Show daily VWAP")
 showVWAPW = input(true, type=bool, title="Show weekly VWAP")
 showVWAPM = input(true, type=bool, title="Show monthly VWAP")
 showVWAPY = input(true, type=bool, title="Show yearly VWAP")
+showVWAPT = input(true, type=bool, title="Show total VWAP")
+
+cumulativePeriod = input(14, "Period")
 
 showPrevVWAPD = input(true, type=bool, title="Show previous daily VWAP close")
 showPrevVWAPW = input(true, type=bool, title="Show previous weekly VWAP close")
 showPrevVWAPM = input(true, type=bool, title="Show previous monthly VWAP close")
-showPrevVWAPY = input(true, type=bool, title="Show previous yearly VWAP close")
+showPrevVWAPY = input(true, type=bool, title="Show previous yearly VWAP close.")
 
 startd = security(tickerid, 'D', time)
 startw = security(tickerid, 'W', time)
@@ -18,35 +23,49 @@ starty = security(tickerid, '12M', time)
 newSessionD = iff(change(startd), 1, 0)
 newSessionW = iff(change(startw), 1, 0)
 newSessionM = iff(change(startm), 1, 0)
-newSessionY = iff(change(starty), 1, 0)
+newSessionY = iff(change(year), 1, 0)
+newSessionT = iff(barstate.isfirst, 1, 0)
+
+typicalPrice = (high + low + close) / 3
+typicalPriceVolume = typicalPrice * volume
+cumulativeTypicalPriceVolume = sum(typicalPriceVolume, cumulativePeriod)
+cumulativeVolume = sum(volume, cumulativePeriod)
+vwapPeriod = cumulativeTypicalPriceVolume / cumulativeVolume
 
 vwapsumD = 0.0
-vwapsumD := iff(newSessionD, hl2*volume, vwapsumD[1]+hl2*volume)
+vwapsumD := iff(newSessionD, hlc3*volume, vwapsumD[1]+hlc3*volume)
 volumesumD = 0.0
 volumesumD := iff(newSessionD, volume, volumesumD[1]+volume)
 myvwapD = 0.0
 myvwapD := vwapsumD/volumesumD
 
 vwapsumW = 0.0
-vwapsumW := iff(newSessionW, hl2*volume, vwapsumW[1]+hl2*volume)
+vwapsumW := iff(newSessionW, hlc3*volume, vwapsumW[1]+hlc3*volume)
 volumesumW = 0.0
 volumesumW := iff(newSessionW, volume, volumesumW[1]+volume)
 myvwapW = 0.0
 myvwapW := vwapsumW/volumesumW
 
 vwapsumM = 0.0
-vwapsumM := iff(newSessionM, hl2*volume, vwapsumM[1]+hl2*volume)
+vwapsumM := iff(newSessionM, hlc3*volume, vwapsumM[1]+hlc3*volume)
 volumesumM = 0.0
 volumesumM := iff(newSessionM, volume, volumesumM[1]+volume)
 myvwapM = 0.0
 myvwapM := vwapsumM/volumesumM
 
 vwapsumY = 0.0
-vwapsumY := iff(newSessionY, hl2*volume, vwapsumY[1]+hl2*volume)
+vwapsumY := iff(newSessionY, hlc3*volume, vwapsumY[1]+hlc3*volume)
 volumesumY = 0.0
 volumesumY := iff(newSessionY, volume, volumesumY[1]+volume)
 myvwapY = 0.0
 myvwapY := vwapsumY/volumesumY
+
+vwapsumT= 0.0
+vwapsumT := iff(newSessionT, hlc3*volume, vwapsumT[1]+hlc3*volume)
+volumesumT = 0.0
+volumesumT := iff(newSessionT, volume, volumesumT[1]+volume)
+myvwapT = 0.0
+myvwapT := vwapsumT/volumesumT
 
 if (barstate.isrealtime)
     myvwapD := myvwapD[1]
@@ -57,11 +76,24 @@ if (barstate.isrealtime)
     volumesumM := volumesumM[1]
     myvwapY := myvwapY[1]
     volumesumY := volumesumY[1]   
+    myvwapT := myvwapT[1]
+    volumesumT := volumesumT[1]  
+    
+plot_period = plot(showVWAPP ? vwapPeriod : na, title="Period VWAP", color=aqua, linewidth=1, transp=0)
 
 plot_daily = plot(showVWAPD ? myvwapD : na, title="Daily VWAP", style=cross, color=fuchsia, linewidth=1, transp=20)
 plot_weekly= plot(showVWAPW ? myvwapW : na, title="Weekly VWAP", style=cross, color=aqua, linewidth=2, transp=0)
 plot_monthly = plot(showVWAPM ? myvwapM : na, title="Monthly VWAP", style=circles, color=white, linewidth=2, transp=0)
 plot_yearly = plot(showVWAPY ? myvwapY : na, title="Yearly VWAP", style=circles, color=yellow, linewidth=2, transp=0)
+plot_total = plot(showVWAPT ? myvwapT : na, title="Total VWAP", style=cross, color=yellow, linewidth=2, transp=0)
+
+fillcolor = blue
+if (myvwapW > vwapPeriod)
+    fillcolor := green
+else 
+    fillcolor := red
+    
+fill(plot_weekly, plot_period, fillcolor, bandTransp)
 
 prevwapD = 0.0
 prevwapD := iff(newSessionD, myvwapD[1], prevwapD[1])
@@ -77,7 +109,7 @@ plot(showPrevVWAPM ? prevwapM : na, title="Prev Monthly VWAP", style=circles, co
 
 prevwapY = 0.0
 prevwapY := iff(newSessionY, myvwapY[1], prevwapY[1])
-plot(showPrevVWAPY ? prevwapY : na, title="Prev Yearly VWAP", color=close > prevwapY ? green : red, linewidth=3, transp=0)
+plot(showPrevVWAPY ? prevwapY : na, title="Prev Yearly VWAP", color=close > prevwapY ? green : red, linewidth=2, transp=0)
     
 ema20 = sma(close[1], 20)
 sma50 = sma(close[1], 50)
@@ -99,7 +131,7 @@ output200Pre = security(tickerid, 'D', sma200Pre,  lookahead=barmerge.lookahead_
 preMarket = false
 if (hour < 9 or (hour == 9 and minute <= 29))
     preMarket := true
-
+    
 plot(preMarket ? output200Pre: output200, title= '200 SMA', color=red, linewidth=2, transp=0)
 plot(preMarket ? output100Pre: output100, title= '100 SMA', color=orange, linewidth=2, transp=0)
 plot(preMarket ? output50Pre: output50, title= '50 SMA', color=yellow, linewidth=2)
