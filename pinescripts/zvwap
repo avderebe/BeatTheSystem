@@ -4,27 +4,17 @@
 //@version=3
 study("Z distance from VWAP", shorttitle="ZVWAP")
 
-len = input('D', title="length")
-startd = security(tickerid, len, time)
+cumulativePeriod = input(168, title="Period")
 
-newSessionD = iff(change(startd), 1, 0)
-
-vwapsumD = 0.0
-vwapsumD := iff(newSessionD, hl2*volume, vwapsumD[1]+hl2*volume)
-volumesumD = 0.0
-volumesumD := iff(newSessionD, volume, volumesumD[1]+volume)
-myvwapD = 0.0
-myvwapD := vwapsumD/volumesumD
-v2sum = 0.0
-v2sum := iff(newSessionD, volume*hl2*hl2, v2sum[1]+volume*hl2*hl2)
-
-if (barstate.isrealtime)
-    myvwapD := myvwapD[1]
-    volumesumD := volumesumD[1]
-    v2sum := v2sum[1]
-    
+typicalPrice = (high + low + close) / 3
+typicalPriceVolume = typicalPrice * volume
+v2 = typicalPrice * typicalPrice * volume
+cumulativeTypicalPriceVolume = sum(typicalPriceVolume, cumulativePeriod)
+cumulativeVolume = sum(volume, cumulativePeriod)
+v2sum = sum(v2, cumulativePeriod)
+vwapPeriod = cumulativeTypicalPriceVolume / cumulativeVolume
 dev = 0.0
-dev := sqrt(max(v2sum/volumesumD - myvwapD*myvwapD, 0))
+dev := sqrt(max(v2sum/cumulativeVolume - vwapPeriod*vwapPeriod, 0))
     
 upperTop=input(3)
 upperBottom=input(2.0)
@@ -39,5 +29,5 @@ ll2=plot(lowerBottom, "OS Low")
 plot(0, color=silver, linewidth=1)
 fill(ll1,ll2, color=green)
 
-plot((myvwapD-close)/dev,title="ZVWAP",color=white, linewidth=2, transp=0)
+plot((vwapPeriod-close)/dev,title="ZVWAP",color=white, linewidth=2, transp=0)
 
