@@ -6,7 +6,6 @@ import os
 from indicators.BarChartIndicatorGen import BarChartIndicatorGen
 from indicators.VolumeIndicatorGen import *
 from indicators.VWAPIndicatorGen import *
-
 from datetime import datetime, timedelta
 
 
