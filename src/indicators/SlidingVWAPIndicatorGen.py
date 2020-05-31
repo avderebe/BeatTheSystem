@@ -10,9 +10,10 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         self.windowAverage = 0
         self.windowVolume = 0
         self.windowVariance = 0
+        self.svwap = 0
         self.average = 0
         self.volume = 0
-        self.closePrice = 0
+        self.variance = 0
         
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
@@ -23,9 +24,10 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
     def CreateEntry(self):
         vol = self.volume
         avg = self.average
-        var = (self.average - self.windowAverage)**2
+        var = self.variance
         self.average = 0
         self.volume = 0
+        self.variance = 0
         return {'volume' : vol,  'average' : avg, 'variance' : var}
 
     def ProcessAddition(self, entry):
@@ -47,11 +49,13 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
     def ProcessTransation(self, time, amount, price):
         self.average = ((self.average * self.volume) + (price * abs(amount))) / (self.volume + abs(amount))
         self.volume += abs(amount)
-        self.closePrice = price
+        self.svwap = (self.average * self.volume + self.windowAverage * self.windowVolume)/(self.volume + self.windowVolume)
+        self.variance = (price-self.svwap)**2
 
     def GetIndicatorValues(self):
-        if len(self.window) != 0:
-            sigma = math.sqrt(self.windowVariance/len(self.window))
+        if self.windowFull:
+            sigma = math.sqrt((self.variance+self.windowVariance)/len(self.window))
         else:
-            sigma = 0
-        return {self.indicator : (self.average * self.volume + self.windowAverage * self.windowVolume)/(self.volume + self.windowVolume), self.indicator+"_sigma" : sigma}
+            sigma = math.sqrt((self.variance+self.windowVariance)/(len(self.window)+1))
+
+        return {self.indicator : self.svwap, self.indicator+"_sigma" : sigma}

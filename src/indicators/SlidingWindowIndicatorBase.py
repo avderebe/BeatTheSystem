@@ -6,6 +6,7 @@ class SlidingWindowIndicatorBase(IndicatorGenBase):
         super().__init__(timePeriod)
         self.runningTime = timedelta()
         self.window = []
+        self.windowFull = False
 
 
     #Say the underlying code calls advance time every 5 minutes, but the whole time period 
@@ -22,6 +23,7 @@ class SlidingWindowIndicatorBase(IndicatorGenBase):
         while (len(self.window) != 0 and self.runningTime - self.window[0]['time'] >= self.timePeriod):
             self.ProcessRemoval(self.window[0]['entry'])
             self.window = self.window[1:]
+            self.windowFull = True
 
     def CreateEntry(self):
         return {}
