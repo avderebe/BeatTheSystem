@@ -24,7 +24,7 @@ def GenerateAndPlot():
 
     # indicators.append(MarketStructureIndicatorGen(indicatorTimeSpan))
 
-    GenerateIndicators(30, indicators, indicatorTimeSpan, filepath, True)
+    GenerateIndicators(20, indicators, indicatorTimeSpan, filepath, True)
 
     df = pandas.read_csv(filepath)
     print(df.columns)
@@ -138,24 +138,14 @@ def GenerateAndPlot():
     # fig.update_xaxes(showgrid=False, showticklabels=False, row=2, col=1, 
     # range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")])
 
-    #plot CVD
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['CVD'], line=dict(color='rgb(0,0,0)', width=1)),
-        row=2, col=1)
-    fig.update_yaxes(title_text="CVD", showgrid=False, row=2, col=1)
-    fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
-        range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")])
-
     #plot deviations
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=(df['close']-df['1daySVWAP'])/df['1daySVWAP_sigma'], line=dict(color='rgb(0,0,0)', width=1)),
-        row=3, col=1)
-    fig.update_yaxes(title_text="1daySVWAP_devs", showgrid=False, row=3, col=1, range=[-3.5, 3.5])
-    fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
+        row=2, col=1)
+    fig.update_yaxes(title_text="1daySVWAP_devs", showgrid=False, row=2, col=1, range=[-3.5, 3.5])
+    fig.update_xaxes(showgrid=False, showticklabels=False, row=2, col=1, 
         range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")])
-
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=df['1daySVWAP']+2*df['1daySVWAP_sigma'], line=dict(color='rgb(255,0,0)', width=2)))
@@ -168,6 +158,15 @@ def GenerateAndPlot():
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=df['1daySVWAP']-3*df['1daySVWAP_sigma'], line=dict(color='rgb(0,255,0)', width=2)))
+
+    #plot CVD
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['CVD'], line=dict(color='rgb(0,0,0)', width=1)),
+        row=3, col=1)
+    fig.update_yaxes(title_text="CVD", showgrid=False, row=3, col=1)
+    fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
+        range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")])
 
     #plot delta
     # y = df['vdelta']
