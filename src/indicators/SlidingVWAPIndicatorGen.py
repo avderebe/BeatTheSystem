@@ -58,4 +58,4 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         else:
             sigma = math.sqrt((self.variance+self.windowVariance)/(len(self.window)+1))
 
-        return {self.indicator : self.svwap, self.indicator+"_sigma" : sigma}
+        return {self.indicator : self.svwap, self.indicator+"_sigma" : sigma, self.indicator+"_sigma_width" : sigma/self.svwap}

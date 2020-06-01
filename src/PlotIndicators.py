@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 def GenerateAndPlot():
     filepath = ".\\minuteBarData\\testDelta.csv"
 
-    indicatorTimeSpan = timedelta(minutes=15)
+    indicatorTimeSpan = timedelta(minutes=30)
 
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
@@ -20,12 +20,12 @@ def GenerateAndPlot():
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
     indicators.append(CVDIndicatorGen(indicatorTimeSpan))
-    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan*24))
+    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan*48))
 
 
     # indicators.append(MarketStructureIndicatorGen(indicatorTimeSpan))
 
-    GenerateIndicators(4, indicators, indicatorTimeSpan, filepath, True)
+    GenerateIndicators(5, indicators, indicatorTimeSpan, filepath, True)
 
     df = pandas.read_csv(filepath)
     print(df.columns)
@@ -106,8 +106,7 @@ def GenerateAndPlot():
     #plot vwaps
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['6hrSVWAP'], line=dict(color='rgb(0,0,256)', width=2)))
-
+        y=df['1daySVWAP'], line=dict(color='rgb(0,0,256)', width=2)))
     # fig.add_trace(go.Scatter(
     #     x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
     #     y=df['vwap'], line=dict(color='rgb(0,0,0)', width=2)))
@@ -141,45 +140,7 @@ def GenerateAndPlot():
     # fig.update_xaxes(showgrid=False, showticklabels=False, row=2, col=1, 
     # range=[start, end])
 
-    #plot deviations
-    fig.add_shape(type="line", x0=start, x1=end, y0=0, y1=0, line=dict(color="rgb(0,0,0)", width=1),row=2, col=1)
-    fig.add_shape(type="rect", x0=start, x1=end, y0=1, y1=2, line=dict(color="rgb(255,0,0)", width=1),fillcolor='rgb(255,200,200)', row=2, col=1, layer='below')
-    fig.add_shape(type="rect", x0=start, x1=end, y0=2, y1=3, line=dict(color="rgb(255,0,0)", width=1),fillcolor='rgb(255,100,100)', row=2, col=1, layer='below')
-    fig.add_shape(type="rect", x0=start, x1=end, y0=-3, y1=-2, line=dict(color="rgb(0,255,0)", width=1), fillcolor='rgb(100,255,100)', row=2, col=1, layer='below')
-    fig.add_shape(type="rect", x0=start, x1=end, y0=-2, y1=-1, line=dict(color="rgb(0,255,0)", width=1), fillcolor='rgb(200,255,200)', row=2, col=1, layer='below')
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=(df['close']-df['6hrSVWAP'])/df['6hrSVWAP_sigma'], line=dict(color='rgb(0,0,0)', width=1)),
-        row=2, col=1)
-    fig.update_yaxes(title_text="6hrSVWAP_devs", showgrid=False, row=2, col=1, range=[-3.5, 3.5])
-    fig.update_xaxes(showgrid=False, showticklabels=False, row=2, col=1, 
-        range=[start, end])
-
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['6hrSVWAP']+2*df['6hrSVWAP_sigma'], line=dict(color='rgb(160,0,0)', width=1)))
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['6hrSVWAP']+3*df['6hrSVWAP_sigma'], line=dict(color='rgb(160,0,0)', width=1), fill='tonexty'))
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['6hrSVWAP']-2*df['6hrSVWAP_sigma'], line=dict(color='rgb(0,160,0)', width=1)))
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['6hrSVWAP']-3*df['6hrSVWAP_sigma'], line=dict(color='rgb(0,160,0)', width=1), fill='tonexty'))
-
-    #plot CVD
-    fig.add_trace(go.Candlestick(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"), 
-        open=df['CVDo'],
-        high=df['CVDh'],
-        low=df['CVDl'],
-        close=df['CVDc']), row=3, col=1)
-    fig.update_yaxes(title_text="CVD", showgrid=False, row=3, col=1)
-    fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
-        range=[start, end], rangeslider=dict (visible = False))
-
-    #plot delta
+    # #plot volume delta
     # y = df['vdelta']
     # color = numpy.array(['rgb(255,255,255)']*y.shape[0])
     # color[y>0]='rgb(0,200,0)'
@@ -191,6 +152,51 @@ def GenerateAndPlot():
     #     row=3, col=1) 
     # fig.update_yaxes(title_text=
     # "Volume Delta", showgrid=False, row=3, col=1)
+
+    # #plot CVD
+    # fig.add_trace(go.Candlestick(
+    #     x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"), 
+    #     open=df['CVDo'],
+    #     high=df['CVDh'],
+    #     low=df['CVDl'],
+    #     close=df['CVDc']), row=3, col=1)
+    # fig.update_yaxes(title_text="CVD", showgrid=False, row=3, col=1)
+    # fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
+    #     range=[start, end], rangeslider=dict (visible = False))
+
+    #plot svwap deviations in pane
+    fig.add_shape(type="line", x0=start, x1=end, y0=0, y1=0, line=dict(color="rgb(0,0,0)", width=1),row=2, col=1)
+    fig.add_shape(type="rect", x0=start, x1=end, y0=1, y1=2, line=dict(color="rgb(255,0,0)", width=1),fillcolor='rgb(255,200,200)', row=2, col=1, layer='below')
+    fig.add_shape(type="rect", x0=start, x1=end, y0=2, y1=3, line=dict(color="rgb(255,0,0)", width=1),fillcolor='rgb(255,100,100)', row=2, col=1, layer='below')
+    fig.add_shape(type="rect", x0=start, x1=end, y0=-3, y1=-2, line=dict(color="rgb(0,255,0)", width=1), fillcolor='rgb(100,255,100)', row=2, col=1, layer='below')
+    fig.add_shape(type="rect", x0=start, x1=end, y0=-2, y1=-1, line=dict(color="rgb(0,255,0)", width=1), fillcolor='rgb(200,255,200)', row=2, col=1, layer='below')
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=(df['close']-df['1daySVWAP'])/df['1daySVWAP_sigma'], line=dict(color='rgb(0,0,0)', width=1)),
+        row=2, col=1)
+    fig.update_yaxes(title_text="1daySVWAP_devs", showgrid=False, row=2, col=1, range=[-3.5, 3.5])
+    fig.update_xaxes(showgrid=False, showticklabels=False, row=2, col=1, 
+        range=[start, end])
+
+    #plot svwap deviation bands
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['1daySVWAP']+2*df['1daySVWAP_sigma'], line=dict(color='rgb(160,0,0)', width=1)))
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['1daySVWAP']+3*df['1daySVWAP_sigma'], line=dict(color='rgb(160,0,0)', width=1), fill='tonexty'))
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['1daySVWAP']-2*df['1daySVWAP_sigma'], line=dict(color='rgb(0,160,0)', width=1)))
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['1daySVWAP']-3*df['1daySVWAP_sigma'], line=dict(color='rgb(0,160,0)', width=1), fill='tonexty'))
+
+    #plot relative sigma
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['1daySVWAP_sigma_width'], line=dict(color='rgb(0,50,100)', width=1)), row=3, col=1)
+    fig.update_yaxes(title_text="Sigma/SVWAP", showgrid=False, row=3, col=1)
 
     # #plot equity curve
     # if len(movesArray)>0:
