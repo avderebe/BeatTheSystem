@@ -5,6 +5,7 @@ from indicators.VWAPIndicatorGen import *
 from indicators.SlidingVWAPIndicatorGen import *
 from indicators.VolumeIndicatorGen import *
 from indicators.MarketStructureIndicatorGen import *
+from indicators.CVDIndicatorGen import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -18,7 +19,7 @@ def GenerateAndPlot():
     # indicators.append(VWapIndicatorGen(indicatorTimeSpan))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
-    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.CVD))
+    indicators.append(CVDIndicatorGen(indicatorTimeSpan))
     indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan*24))
 
 
@@ -168,13 +169,15 @@ def GenerateAndPlot():
         y=df['6hrSVWAP']-3*df['6hrSVWAP_sigma'], line=dict(color='rgb(0,160,0)', width=1), fill='tonexty'))
 
     #plot CVD
-    fig.add_trace(go.Scatter(
-        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['CVD'], line=dict(color='rgb(0,0,0)', width=1)),
-        row=3, col=1)
+    fig.add_trace(go.Candlestick(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"), 
+        open=df['CVDo'],
+        high=df['CVDh'],
+        low=df['CVDl'],
+        close=df['CVDc']), row=3, col=1)
     fig.update_yaxes(title_text="CVD", showgrid=False, row=3, col=1)
     fig.update_xaxes(showgrid=False, showticklabels=True, row=3, col=1, 
-        range=[start, end])
+        range=[start, end], rangeslider=dict (visible = False))
 
     #plot delta
     # y = df['vdelta']

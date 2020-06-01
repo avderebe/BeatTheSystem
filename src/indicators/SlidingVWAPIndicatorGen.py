@@ -53,7 +53,7 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         self.variance = (price-self.svwap)**2
 
     def GetIndicatorValues(self):
-        if self.windowFull:
+        if self.windowFull is True:
             sigma = math.sqrt((self.variance+self.windowVariance)/len(self.window))
         else:
             sigma = math.sqrt((self.variance+self.windowVariance)/(len(self.window)+1))

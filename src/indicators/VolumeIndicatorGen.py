@@ -6,7 +6,8 @@ class VolumeType(Enum):
     Sell = 2
     All = 3
     Delta = 4
-    CVD = 5
+    DeltaCVD = 5
+
 
 
 class VolumeIndicatorGen(IndicatorGenBase):
@@ -16,7 +17,7 @@ class VolumeIndicatorGen(IndicatorGenBase):
         self.volume = 0
 
     def StartNewTimePeriod(self):
-        if self.Type != VolumeType.CVD:
+        if self.Type != VolumeType.DeltaCVD:
             self.volume = 0
 
     def ProcessTransation(self, time, amount, price):
@@ -28,7 +29,7 @@ class VolumeIndicatorGen(IndicatorGenBase):
             self.volume += abs(amount)
         elif self.Type == VolumeType.Delta:
             self.volume += amount
-        elif self.Type == VolumeType.CVD:
+        elif self.Type == VolumeType.DeltaCVD:
             self.volume += amount
 
     def GetIndicatorValues(self):
@@ -41,6 +42,7 @@ class VolumeIndicatorGen(IndicatorGenBase):
             name = "vtotal"
         elif self.Type == VolumeType.Delta:
             name = "vdelta"
-        elif self.Type == VolumeType.CVD:
-            name = "CVD"
+        elif self.Type == VolumeType.DeltaCVD:
+            name = "vdeltaCVD"
+
         return {name : self.volume}
