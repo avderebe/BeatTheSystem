@@ -14,6 +14,11 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         self.average = 0
         self.volume = 0
         self.variance = 0
+        self.sigma = 0
+        self.open = None
+        self.close = None
+        self.low = None
+        self.high = None
         
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
@@ -28,6 +33,9 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         self.average = 0
         self.volume = 0
         self.variance = 0
+        self.open = self.close
+        self.low = self.close
+        self.high = self.close
         return {'volume' : vol,  'average' : avg, 'variance' : var}
 
     def ProcessAddition(self, entry):
@@ -51,11 +59,23 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         self.volume += abs(amount)
         self.svwap = (self.average * self.volume + self.windowAverage * self.windowVolume)/(self.volume + self.windowVolume)
         self.variance = (price-self.svwap)**2
+        if self.windowFull is True:
+            self.sigma = math.sqrt((self.variance+self.windowVariance)/len(self.window))
+        else:
+            self.sigma = math.sqrt((self.variance+self.windowVariance)/(len(self.window)+1))
+
+        if self.open is None:
+            self.open = self.sigma
+            self.low = self.sigma
+            self.high = self.sigma
+        
+        if self.low > self.sigma:
+            self.low = self.sigma
+        
+        if self.high < self.sigma:
+            self.high = self.sigma
+        
+        self.close = self.sigma
 
     def GetIndicatorValues(self):
-        if self.windowFull is True:
-            sigma = math.sqrt((self.variance+self.windowVariance)/len(self.window))
-        else:
-            sigma = math.sqrt((self.variance+self.windowVariance)/(len(self.window)+1))
-
-        return {self.indicator : self.svwap, self.indicator+"_sigma" : sigma, self.indicator+"_sigma_width" : sigma/self.svwap}
+        return {self.indicator : self.svwap, self.indicator+"sigmaO" : self.open, self.indicator+"sigmaC" : self.close, self.indicator+"sigmaL" : self.low, self.indicator+"sigmaH" : self.high}
