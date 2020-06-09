@@ -1,18 +1,18 @@
-from indicators.VolumeIndicatorGen import VolumeType,VolumeIndicatorGen
-from indicators.BarChartIndicatorGen import BarChartIndicatorGen
-from indicators.VWAPIndicatorGen import VWapIndicatorGen
-from indicators.MarketStructureIndicatorGen import MarketStructureIndicatorGen
-from indicators.SMAIndicatorGen import SMAIndicatorGen
-from indicators.SlidingVWAPIndicatorGen import SlidingVWAPIndicatorGen
+from TransactionBasedIndicators.VolumeIndicatorGen import VolumeType,VolumeIndicatorGen
+from TransactionBasedIndicators.BarChartIndicatorGen import BarChartIndicatorGen
+from TransactionBasedIndicators.VWAPIndicatorGen import VWapIndicatorGen
+from TransactionBasedIndicators.MarketStructureIndicatorGen import MarketStructureIndicatorGen
+from BarBasedIndicators.SMAIndicatorGen import SMAIndicatorGen
+from BarBasedIndicators.SlidingVWAPIndicatorGen import SlidingVWAPIndicatorGen
 from datetime import datetime,timedelta
 
-def TestIndicators():
+def TestTranscationBasedIndicators():
     indicatorTimeSpan = timedelta(minutes=5)
     indicators = []
-    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan))
-    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 2))
-    indicators.append(SMAIndicatorGen(indicatorTimeSpan))
-    indicators.append(SMAIndicatorGen(indicatorTimeSpan*2))
+    #indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan))
+    #indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 2))
+    #indicators.append(SMAIndicatorGen(indicatorTimeSpan))
+    #indicators.append(SMAIndicatorGen(indicatorTimeSpan*2))
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
@@ -51,5 +51,30 @@ def TestIndicators():
         indicator.AdvanceTime(indicatorTimeSpan)
 
 
+def TestBarBasedIndicators():
+    indicatorTimeSpan = timedelta(minutes=5)
+
+    indicators = []
+    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan))
+    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan*2))
+    indicators.append(SMAIndicatorGen(indicatorTimeSpan))
+
+    for indicator in indicators:
+
+        indicator.ProcessBar({'vtotal' : 100, 'vwap' : 20})
+        print(indicator.GetIndicatorValues())
+        indicator.AdvanceTime(indicatorTimeSpan)
+        
+        indicator.ProcessBar({'vtotal' : 50, 'vwap' : 40})
+        print(indicator.GetIndicatorValues())
+        indicator.AdvanceTime(indicatorTimeSpan)
+
+
+        indicator.ProcessBar({'vtotal' : 200, 'vwap' : 20})
+        print(indicator.GetIndicatorValues())
+        indicator.AdvanceTime(indicatorTimeSpan)
+
+
 if __name__ == "__main__":
-    TestIndicators()
+    TestTranscationBasedIndicators()
+    TestBarBasedIndicators()

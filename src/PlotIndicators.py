@@ -1,27 +1,34 @@
 from GenIndicators import *
 from datetime import datetime, timedelta
-from indicators.BarChartIndicatorGen import *
-from indicators.VWAPIndicatorGen import *
-from indicators.VolumeIndicatorGen import *
-from indicators.SlidingVWAPIndicatorGen import *
+from TransactionBasedIndicators.BarChartIndicatorGen import *
+from TransactionBasedIndicators.VWAPIndicatorGen import *
+from TransactionBasedIndicators.VolumeIndicatorGen import *
+from BarBasedIndicators.SlidingVWAPIndicatorGen import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 def GenerateAndPlot():
     filepath = ".\\minuteBarData\\test.csv"
+    finalFilePath = ".\\minuteBarData\\testf.csv"
 
     indicatorTimeSpan = timedelta(days=1)
 
     indicators = []
     indicators.append(BarChartIndicatorGen(indicatorTimeSpan))
-    indicators.append(VWapIndicatorGen(indicatorTimeSpan* 7))
+    indicators.append(VWapIndicatorGen(indicatorTimeSpan))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
-    indicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 7))
+    indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
 
-    GenerateIndicators(365, indicators, indicatorTimeSpan, filepath, True)
+    GenerateMinuteBars(5, indicators, indicatorTimeSpan, filepath, True)
 
-    df = pandas.read_csv(filepath)
+    barIndicators = []
+    barIndicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 7))
+
+    GenerateIndicators(barIndicators, filepath, finalFilePath, True)
+
+
+    df = pandas.read_csv(finalFilePath)
 
     #trendChanges = pandas.Series(df.loc['trend', : ].diff())
     #trends_filtered = trendChanges[trendChanges!=0]
@@ -84,7 +91,7 @@ def GenerateAndPlot():
         xaxis=go.layout.XAxis(rangeslider=dict (visible = False))))
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
-        y=df['7dayVWAP'], line=dict(color='rgb(256,0,0)', width=2)))
+        y=df['vwap'], line=dict(color='rgb(256,0,0)', width=2)))
     fig.add_trace(go.Scatter(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=df['7daySVWAP'], line=dict(color='rgb(0,0,256)', width=2)))

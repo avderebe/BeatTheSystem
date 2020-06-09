@@ -1,7 +1,7 @@
-from .IndicatorGenBase import *
+from .BarBasedIndicatorGenBase import *
 from datetime import timedelta
 
-class SlidingWindowIndicatorBase(IndicatorGenBase):
+class SlidingWindowIndicatorBase(BarBasedIndicatorGenBase):
     def __init__(self, timePeriod):
         super().__init__(timePeriod)
         self.runningTime = timedelta()
@@ -14,16 +14,19 @@ class SlidingWindowIndicatorBase(IndicatorGenBase):
     #but we will keep the last day's worth of entries
     #So we process and remove an entry every time we advance time
     def AdvanceTime(self, time):
-        entry = self.CreateEntry()
-        self.window.append({'time': self.runningTime, 'entry': entry})
         self.runningTime += time
-        self.ProcessAddition(entry)
 
         while (len(self.window) != 0 and self.runningTime - self.window[0]['time'] >= self.timePeriod):
             self.ProcessRemoval(self.window[0]['entry'])
             self.window = self.window[1:]
 
-    def CreateEntry(self):
+    def ProcessBar(self, bar):
+        entry = self.CreateEntry(bar)
+        self.window.append({'time': self.runningTime, 'entry': entry})
+        self.ProcessAddition(entry)
+
+
+    def CreateEntry(self, bar):
         return {}
 
     def ProcessAddition(self, entry):

@@ -1,5 +1,5 @@
 #importing just the class from IndicatorGenBase module
-from indicators.IndicatorGenBase import IndicatorGenBase
+from .IndicatorGenBase import IndicatorGenBase
 
 import math
 

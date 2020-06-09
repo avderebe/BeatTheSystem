@@ -7,21 +7,21 @@ class SMAIndicatorGen(SlidingWindowIndicatorBase):
         super().__init__(timePeriod)
         self.windowAverage = 0
         self.windowCount = 0
-        self.average = 0
-        self.count = 0
         
+
+        #annoying but correct way to round 0's off numbers
+        DropZeros = lambda d : d.to_integral() if d == d.to_integral() else d.normalize()
+
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
         minutes = round(self.timePeriod.seconds / 60)
-        self.indicator = str(days) + "daySMA" if days != 0 else str(Decimal(hrs).normalize()) + "hrSMA" if hrs >= 1 else str(Decimal(minutes).normalize()) + "minSMA"
+        self.indicator = str(days) + "daySMA" if days != 0 else str(DropZeros(Decimal(hrs))) + "hrSMA" if hrs >= 1 else str(DropZeros(Decimal(minutes))) + "minSMA"
 
 
-    def CreateEntry(self):
-        avg = self.average
-        cnt = self.count
-        self.average = 0
-        self.count = 0
-        return {'average' : avg, 'count' : cnt}
+    def CreateEntry(self, bar):
+        #currently broken until we add a basic count & average to transaction based indicators
+        #I dunno if we even need this one anyway
+        return {'average' : 0, 'count' : 0}
 
     def ProcessAddition(self, entry):
         self.windowAverage = (self.windowAverage * self.windowCount + entry['average'] * entry['count']) / (self.windowCount + entry['count'])
@@ -35,9 +35,5 @@ class SMAIndicatorGen(SlidingWindowIndicatorBase):
             self.windowAverage = 0
             self.windowCount = 0
 
-    def ProcessTransation(self, time, amount, price):
-        self.average = (self.average * self.count + price) / (self.count + 1)
-        self.count = self.count + 1
-
     def GetIndicatorValues(self):
-        return {self.indicator : (self.average * self.count + self.windowAverage * self.windowCount) / (self.count + self.windowCount)}
+        return {self.indicator : self.windowAverage}

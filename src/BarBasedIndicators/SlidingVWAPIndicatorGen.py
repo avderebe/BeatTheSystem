@@ -8,21 +8,19 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
         #hold both window average and running average for current time period
         self.windowAverage = 0
         self.windowVolume = 0
-        self.average = 0
-        self.volume = 0
         
+
+        #annoying but correct way to round 0's off numbers
+        DropZeros = lambda d : d.to_integral() if d == d.to_integral() else d.normalize()
+
         days = self.timePeriod.days
         hrs = round(self.timePeriod.seconds / 3600,1)
         minutes = round(self.timePeriod.seconds / 60)
-        self.indicator = str(days) + "daySVWAP" if days != 0 else str(Decimal(hrs).normalize()) + "hrSVWAP" if hrs >= 1 else str(Decimal(minutes).normalize()) + "minSVWAP"
+        self.indicator = str(days) + "daySVWAP" if days != 0 else str(DropZeros(Decimal(hrs))) + "hrSVWAP" if hrs >= 1 else str(DropZeros(Decimal(minutes))) + "minSVWAP"
 
 
-    def CreateEntry(self):
-        vol = self.volume
-        avg = self.average
-        self.average = 0
-        self.volume = 0
-        return {'volume' : vol,  'average' : avg}
+    def CreateEntry(self, bar):
+        return {'volume' : bar['vtotal'],  'average' : bar['vwap']}
 
     def ProcessAddition(self, entry):
         self.windowAverage = (self.windowAverage * self.windowVolume + entry['average'] * entry['volume']) / (self.windowVolume + entry['volume'])
@@ -37,9 +35,5 @@ class SlidingVWAPIndicatorGen(SlidingWindowIndicatorBase):
             self.windowAverage = 0
             self.windowVolume = 0
 
-    def ProcessTransation(self, time, amount, price):
-        self.average = ((self.average * self.volume) + (price * abs(amount))) / (self.volume + abs(amount))
-        self.volume += abs(amount)
-
     def GetIndicatorValues(self):
-        return {self.indicator : (self.average * self.volume + self.windowAverage * self.windowVolume)/(self.volume + self.windowVolume)}
+        return {self.indicator : self.windowAverage}

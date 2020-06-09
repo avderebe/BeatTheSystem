@@ -1,6 +1,6 @@
 #importing just the class from IndicatorGenBase module
-from indicators.IndicatorGenBase import IndicatorGenBase
-from indicators.BarChartIndicatorGen import BarChartIndicatorGen
+from .IndicatorGenBase import IndicatorGenBase
+from .BarChartIndicatorGen import BarChartIndicatorGen
 
 import math
 
