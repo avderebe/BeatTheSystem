@@ -13,6 +13,13 @@ class VolumeIndicatorGen(IndicatorGenBase):
         self.Type = volumeType
         self.volume = 0
 
+        if self.Type == VolumeType.Buy:
+            self.indicator = "vbuy"
+        elif self.Type == VolumeType.Sell:
+            self.indicator = "vsell"
+        elif self.Type == VolumeType.All:
+            self.indicator = "vtotal"
+
     def StartNewTimePeriod(self):
         self.volume = 0
 
@@ -25,11 +32,10 @@ class VolumeIndicatorGen(IndicatorGenBase):
             self.volume += abs(amount)
 
     def GetIndicatorValues(self):
-        name = ""
-        if self.Type == VolumeType.Buy:
-            name = "vbuy"
-        elif self.Type == VolumeType.Sell:
-            name = "vsell"
-        elif self.Type == VolumeType.All:
-            name = "vtotal"
-        return {name : self.volume}
+        return {self.indicator : self.volume}
+
+    def GetState(self):
+        return {self.indicator : {'volume' : self.volume}}
+
+    def LoadState(self, data):
+        self.volume =  data[self.indicator]['volume']

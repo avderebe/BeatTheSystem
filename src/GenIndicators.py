@@ -2,6 +2,7 @@ import pandas
 import numpy
 import glob
 import os
+import pickle
 
 from TransactionBasedIndicators.BarChartIndicatorGen import BarChartIndicatorGen
 from TransactionBasedIndicators.VolumeIndicatorGen import *
@@ -12,7 +13,7 @@ from datetime import datetime, timedelta
 
 
 
-def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, verbose = False):
+def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, regenerate=False, verbose = False):
 
     if minuteBarTimeSpan.microseconds != 0:
         raise Exception("Microseconds cannot be 0")
@@ -20,19 +21,66 @@ def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, verbos
     if minuteBarTimeSpan.days != 0 and minuteBarTimeSpan.seconds != 0:
         raise Exception("time span must be either full days or fractions of a day")
 
+
+    all_filenames = [a for a in glob.glob('.\\postProcessingData\\*.csv')]
+    curTime = None
+
+
+    #regeneration or continue from last bar
+    savedStatePath = os.path.join(os.path.dirname(outputPath), "savedState", os.path.basename(outputPath))
+
+    #if neither important file exists, regenerate
+    if not os.path.exists(outputPath) or not os.path.exists(savedStatePath):
+        regenerate = True
+
+    #Check if the indicators don't match the generated ones
+    #If they don't match, the generated data will not be compatible, so regenerate
+    if not regenerate:
+        sampleRow = {'timestamp' : 0}
+        for indicator in indicators:
+            sampleRow.update(indicator.GetIndicatorValues())
+        
+        cols = pandas.read_csv(outputPath,nrows=1)
+        if set(cols.columns.values) != set(sampleRow.keys()):
+            regenerate = True
+
+
+    #if this is true, we passed all the other checks
+    #read the saved state into memory
+    if not regenerate:
+        savedState = None
+        with open(savedStatePath, "rb") as f:
+            savedState = pickle.load(f)
+
+        for indicator in indicators:
+            indicator.LoadState(savedState)
+
+        curTime = savedState['timestamp']
+        lastFile = savedState['lastFile']
+        all_filenames = all_filenames[all_filenames.index(lastFile)+1:]
+
+        #since we added an unclosed row to the end of the data file
+        #and since we're loading the state for that bar
+        #we are essentially recalculating the last bar
+        #so delete the last bar, used the saved state and start from there
+        df = pandas.read_csv(outputPath)
+        df = df[:-1]
+        df.to_csv(outputPath, index=False, header=True)
+
+
+    if regenerate and os.path.exists(outputPath):
+        os.remove(outputPath)
+
     #funky stuff for past data manipulation
     #Numpy Arrays and DataFrames are slow to append to, so use dict first
     data = []
-    curTime = None
+
     i = 0
     filesDone = 0
+    lastFile = ""
 
-    if os.path.exists(outputPath):
-        os.remove(outputPath)
-
-    all_filenames = [a for a in glob.glob('.\\postProcessingData\\*.csv')]
     for f in all_filenames:
-
+        lastFile = f
         before = datetime.now()
 
         xbtData = pandas.read_csv(f)
@@ -97,11 +145,21 @@ def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, verbos
 
         
     #after files are done, there's still one unclosed time period. Add that too
-
     newRow = {'timestamp' : curTime.strftime("%Y-%m-%dD%H:%M:%S")}
     for indicator in indicators:
         newRow.update(indicator.GetIndicatorValues())
     pandas.DataFrame([newRow]).to_csv(outputPath, mode="a", index=False, header=True if not os.path.exists(outputPath) else False)
+
+
+    #save state of conversion
+    saveState = {'timestamp' : curTime, 'lastFile' : lastFile}
+    for indicator in indicators:
+        saveState.update(indicator.GetState())
+
+    if not os.path.exists(os.path.dirname(savedStatePath)):
+        os.makedirs(os.path.dirname(savedStatePath))
+    with open(savedStatePath, 'wb') as f:
+        pickle.dump(saveState, f, pickle.HIGHEST_PROTOCOL)
 
 
 def GenerateIndicators(indicators, filePath, outputPath, verbose = False):
@@ -166,7 +224,7 @@ if __name__ == "__main__":
     indicators.append(VolumeIndicatorGen(minuteBarTimeSpan, VolumeType.Sell))
     indicators.append(VolumeIndicatorGen(minuteBarTimeSpan, VolumeType.All))
 
-    GenerateMinuteBars(5, indicators, minuteBarTimeSpan, ".\\minuteBarData\\newData.csv", True)
+    GenerateMinuteBars(2, indicators, minuteBarTimeSpan, ".\\minuteBarData\\newData.csv", False, True)
 
     barIndicators = []
     barIndicators.append(SlidingVWAPIndicatorGen(timedelta(days=1)))

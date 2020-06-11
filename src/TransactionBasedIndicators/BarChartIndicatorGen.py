@@ -35,3 +35,13 @@ class BarChartIndicatorGen(IndicatorGenBase):
 
     def GetIndicatorValues(self):
         return {'open' : self.open, 'close' : self.close, 'low' : self.low, 'high' : self.high}
+
+    def GetState(self):
+        return {'barchart' : {'open' : self.open, 'close' : self.close, 'low' : self.low, 'high' : self.high}}
+
+    def LoadState(self, data):
+        barchartData = data['barchart']
+        self.open = barchartData['open']
+        self.close = barchartData['close']
+        self.low = barchartData['low']
+        self.high = barchartData['high']

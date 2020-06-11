@@ -19,3 +19,11 @@ class VWapIndicatorGen(IndicatorGenBase):
 
     def GetIndicatorValues(self):
         return {"vwap": self.average}
+
+    def GetState(self):
+        return {"vwap" : {'average' : self.average, "volume": self.volume}}
+
+    def LoadState(self, data):
+        vwapData = data['vwap']
+        self.average = vwapData['average']
+        self.volume = vwapData['volume']

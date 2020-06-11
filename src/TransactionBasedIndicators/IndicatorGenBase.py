@@ -19,3 +19,10 @@ class IndicatorGenBase:
 
     def GetIndicatorValues(self):
         return {}
+
+    #need to make sure that derived classes do not share the same state variables
+    def GetState(self):
+        return {}
+
+    def LoadState(self, data):
+        return
