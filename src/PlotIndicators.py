@@ -10,6 +10,7 @@ from plotly.subplots import make_subplots
 def GenerateAndPlot():
     filepath = ".\\minuteBarData\\test.csv"
     finalFilePath = ".\\minuteBarData\\testf.csv"
+    predictiveMovePath = ".\\minuteBarData\\testp.csv"
 
     indicatorTimeSpan = timedelta(days=1)
 
@@ -20,15 +21,27 @@ def GenerateAndPlot():
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.Sell))
     indicators.append(VolumeIndicatorGen(indicatorTimeSpan, VolumeType.All))
 
-    GenerateMinuteBars(5, indicators, indicatorTimeSpan, filepath, True)
+    #GenerateMinuteBars(30, indicators, indicatorTimeSpan, filepath, False, True)
 
     barIndicators = []
     barIndicators.append(SlidingVWAPIndicatorGen(indicatorTimeSpan * 7))
 
     GenerateIndicators(barIndicators, filepath, finalFilePath, True)
 
+    #These weight functions basically assigns weight the effect of a price difference between two bars depending on their distance in time
+    #short term, the weight shrinks by x^2
+    #longer term x^1.75
+    #long term x^1.5
+    #Still WIP though, its hard to find a good weight
+    #This will essentially be how we define the "optimal" move over the course of time
+    #Given all the past/pres/future price movements, what is the "optimal" time to buy or sell
+    #We will feed this into the neural network in hopes that it will learn to determine the "optimal"
+    #moves by only feeding it the past/present data
+    GenerateBuySellPredictors(finalFilePath, predictiveMovePath, lambda x : 1 / (8 + (x ** 2) / 6), "shortTermBuy", "shortTermSell", verbose=True)
+    GenerateBuySellPredictors(predictiveMovePath, predictiveMovePath, lambda x : 1 / (25 + (x ** 1.75) / 2), "longerTermBuy", "longerTermSell", verbose=True)
+    GenerateBuySellPredictors(predictiveMovePath, predictiveMovePath, lambda x : 1 / (400 + (x ** 1.5)), "longTermBuy", "longTermSell", verbose=True)
 
-    df = pandas.read_csv(finalFilePath)
+    df = pandas.read_csv(predictiveMovePath)
 
     #trendChanges = pandas.Series(df.loc['trend', : ].diff())
     #trends_filtered = trendChanges[trendChanges!=0]
@@ -61,7 +74,7 @@ def GenerateAndPlot():
     #movesArray = numpy.array(moves)
     #print(moves)
     #print(movesArray)
-    fig = make_subplots(rows=2, cols=1, row_heights=[0.8,0.2])
+    fig = make_subplots(rows=3, cols=1, row_heights=[0.8,0.2, 0.2], shared_xaxes=True)
 
     fig.add_trace(go.Candlestick(
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"), 
@@ -105,12 +118,38 @@ def GenerateAndPlot():
         x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
         y=df['vsell']*-1,
         marker=dict(color='rgb(200,0,0)')),
-        row=2, col=1) 
+        row=2, col=1)
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['shortTermBuy'], line=dict(color='rgb(0,200,0)', width=2)),
+        row=3, col=1)
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['longerTermBuy'], line=dict(color='rgb(0,150,0)', width=2)),
+        row=3, col=1)
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['longTermBuy'], line=dict(color='rgb(0,100,0)', width=2)),
+        row=3, col=1)
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['shortTermSell'], line=dict(color='rgb(200,0,0)', width=2)),
+        row=3, col=1)
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['longerTermSell'], line=dict(color='rgb(150,0,0)', width=2)),
+        row=3, col=1) 
+    fig.add_trace(go.Scatter(
+        x=pandas.to_datetime(df['timestamp'], format="%Y-%m-%dD%H:%M:%S"),
+        y=df['longTermSell'], line=dict(color='rgb(100,0,0)', width=2)),
+        row=3, col=1)  
 
     fig.update_yaxes(title_text="Volume", showgrid=False, row=2, col=1)
+    fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=3, col=1)
     fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=2, col=1)
     fig.update_xaxes(range=[pandas.to_datetime(df.iloc[0, 0], format="%Y-%m-%dD%H:%M:%S"), pandas.to_datetime(df.iloc[-1, 0], format="%Y-%m-%dD%H:%M:%S")], showgrid=False, row=1, col=1)
 
+    fig.update_xaxes(matches="x")
     fig.show()
 
 

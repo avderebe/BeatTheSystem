@@ -9,7 +9,7 @@ from TransactionBasedIndicators.VolumeIndicatorGen import *
 from TransactionBasedIndicators.VWAPIndicatorGen import *
 from BarBasedIndicators.SlidingVWAPIndicatorGen import SlidingVWAPIndicatorGen
 from datetime import datetime, timedelta
-
+from itertools import islice
 
 
 
@@ -24,6 +24,7 @@ def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, regene
 
     all_filenames = [a for a in glob.glob('.\\postProcessingData\\*.csv')]
     curTime = None
+    lastFile = ""
 
 
     #regeneration or continue from last bar
@@ -43,7 +44,6 @@ def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, regene
         cols = pandas.read_csv(outputPath,nrows=1)
         if set(cols.columns.values) != set(sampleRow.keys()):
             regenerate = True
-
 
     #if this is true, we passed all the other checks
     #read the saved state into memory
@@ -77,7 +77,6 @@ def GenerateMinuteBars(nFiles, indicators, minuteBarTimeSpan, outputPath, regene
 
     i = 0
     filesDone = 0
-    lastFile = ""
 
     for f in all_filenames:
         lastFile = f
@@ -168,7 +167,6 @@ def GenerateIndicators(indicators, filePath, outputPath, verbose = False):
     #Numpy Arrays and DataFrames are slow to append to, so use dict first
     data = []
     prevTime = None
-    i = 0
 
     if os.path.exists(outputPath):
         os.remove(outputPath)
@@ -212,6 +210,39 @@ def GenerateIndicators(indicators, filePath, outputPath, verbose = False):
         print(outputPath + " done. Time to process: " + str(after - before))
 
 
+def GenerateBuySellPredictors(filePath, outputPath, weightFunc, buyColName = 'buyPredictor', sellColName = 'sellPredictor', verbose = False):
+    if not os.path.exists(filePath):
+        raise Exception("File does not exist")
+
+    before = datetime.now()
+
+    data = pandas.read_csv(filePath)
+
+    #Generate buy/sell predictors based on full knowledge of past, present and future prices
+    #Our optimal algorithm will be able to predict these values without knowledge of the future
+    #So we generate the optimal moves, and train the Neural network to hopefully predict this
+    #With incomplete data (since we don't know the future)
+    buyPredictors = [0] * len(data)
+    sellPredictors = [0] * len(data)
+    for idx1, row1 in data.iterrows():
+        for idx2, row2 in islice(data.iterrows(), idx1 + 1, None):
+            if row1['vwap'] < row2['vwap']:
+                buyPredictors[idx1] = buyPredictors[idx1] + weightFunc(idx2 - idx1) * (row2['vwap'] - row1['vwap']) / row1['vwap']
+                sellPredictors[idx2] = sellPredictors[idx2] + weightFunc(idx2 - idx1) * (row2['vwap'] - row1['vwap']) / row1['vwap'] 
+            else:
+                sellPredictors[idx1] = sellPredictors[idx1] + weightFunc(idx2 - idx1) * (row1['vwap'] - row2['vwap']) / row1['vwap']
+                buyPredictors[idx2] = buyPredictors[idx2] + weightFunc(idx2 - idx1) * (row1['vwap'] - row2['vwap']) / row1['vwap']
+
+        data.loc[idx1, buyColName] = buyPredictors[idx1]
+        data.loc[idx1, sellColName] = sellPredictors[idx1]
+
+    data.to_csv(outputPath, index=False, header=True)
+
+    after = datetime.now()
+
+    if verbose:
+        print(outputPath + " done. Time to process: " + str(after - before))
+
 if __name__ == "__main__":
     minuteBarTimeSpan = timedelta(hours = 2) #minutes
 
@@ -219,13 +250,15 @@ if __name__ == "__main__":
 
     indicators = []
     indicators.append(BarChartIndicatorGen(minuteBarTimeSpan))
-    indicators.append(VWapIndicatorGen(timedelta(days=1))) #1day vwap
+    indicators.append(VWapIndicatorGen(minuteBarTimeSpan)) #1day vwap
     indicators.append(VolumeIndicatorGen(minuteBarTimeSpan, VolumeType.Buy))
     indicators.append(VolumeIndicatorGen(minuteBarTimeSpan, VolumeType.Sell))
     indicators.append(VolumeIndicatorGen(minuteBarTimeSpan, VolumeType.All))
 
-    GenerateMinuteBars(2, indicators, minuteBarTimeSpan, ".\\minuteBarData\\newData.csv", False, True)
+    GenerateMinuteBars(1, indicators, minuteBarTimeSpan, ".\\minuteBarData\\newData.csv", True, True)
 
     barIndicators = []
     barIndicators.append(SlidingVWAPIndicatorGen(timedelta(days=1)))
     GenerateIndicators(barIndicators, ".\\minuteBarData\\newData.csv", ".\\minuteBarData\\newDataF.csv", True)
+
+    GenerateBuySellPredictors(".\\minuteBarData\\newDataF.csv", ".\\minuteBarData\\newDataPred.csv", lambda x : 1 / (10 + x), verbose=True)
