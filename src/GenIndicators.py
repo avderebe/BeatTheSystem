@@ -210,7 +210,7 @@ def GenerateIndicators(indicators, filePath, outputPath, verbose = False):
         print(outputPath + " done. Time to process: " + str(after - before))
 
 
-def GenerateBuySellPredictors(filePath, outputPath, weightFunc, buyColName = 'buyPredictor', sellColName = 'sellPredictor', verbose = False):
+def GenerateBuySellPredictors(filePath, outputPath, weightFunc, cutoffWeight = 0, buyColName = 'buyPredictor', sellColName = 'sellPredictor', verbose = False):
     if not os.path.exists(filePath):
         raise Exception("File does not exist")
 
@@ -226,12 +226,16 @@ def GenerateBuySellPredictors(filePath, outputPath, weightFunc, buyColName = 'bu
     sellPredictors = [0] * len(data)
     for idx1, row1 in data.iterrows():
         for idx2, row2 in islice(data.iterrows(), idx1 + 1, None):
+            weight = weightFunc(idx2 - idx1)
+            if weight < cutoffWeight:
+                break
+
             if row1['vwap'] < row2['vwap']:
-                buyPredictors[idx1] = buyPredictors[idx1] + weightFunc(idx2 - idx1) * (row2['vwap'] - row1['vwap']) / row1['vwap']
-                sellPredictors[idx2] = sellPredictors[idx2] + weightFunc(idx2 - idx1) * (row2['vwap'] - row1['vwap']) / row1['vwap'] 
+                buyPredictors[idx1] = buyPredictors[idx1] + weight * (row2['vwap'] - row1['vwap']) / row1['vwap']
+                sellPredictors[idx2] = sellPredictors[idx2] + weight * (row2['vwap'] - row1['vwap']) / row1['vwap'] 
             else:
-                sellPredictors[idx1] = sellPredictors[idx1] + weightFunc(idx2 - idx1) * (row1['vwap'] - row2['vwap']) / row1['vwap']
-                buyPredictors[idx2] = buyPredictors[idx2] + weightFunc(idx2 - idx1) * (row1['vwap'] - row2['vwap']) / row1['vwap']
+                sellPredictors[idx1] = sellPredictors[idx1] + weight * (row1['vwap'] - row2['vwap']) / row1['vwap']
+                buyPredictors[idx2] = buyPredictors[idx2] + weight * (row1['vwap'] - row2['vwap']) / row1['vwap']
 
         data.loc[idx1, buyColName] = buyPredictors[idx1]
         data.loc[idx1, sellColName] = sellPredictors[idx1]
