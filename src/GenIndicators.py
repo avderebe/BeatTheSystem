@@ -194,6 +194,7 @@ def GenerateIndicators(indicators, filePath, outputPath, verbose = False):
             indicator.ProcessBar(row)
             newRow.update(indicator.GetIndicatorValues())
         
+        prevTime = dt
         data.append(newRow)
 
 
